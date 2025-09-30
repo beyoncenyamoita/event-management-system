@@ -3,54 +3,703 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Management</title>
+    <title>Event Management System</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 40px; }
-        .events-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .event-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .event-title { font-size: 1.5em; margin-bottom: 10px; color: #333; }
-        .event-date { color: #666; font-weight: bold; }
-        .event-location { color: #888; margin: 5px 0; }
-        .event-description { margin: 10px 0; color: #555; }
-        .btn { display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; margin-top: 10px; }
-        .btn:hover { background: #0056b3; }
-        .btn-disabled { background: #6c757d; cursor: not-allowed; }
-        .spots-available { color: #28a745; font-weight: bold; }
-        .spots-full { color: #dc3545; font-weight: bold; }
+        :root {
+            --primary: #007bff;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --dark: #343a40;
+            --light: #f8f9fa;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* Header Styles */
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: var(--dark);
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+        
+        /* Admin Panel */
+        .admin-panel {
+            background: var(--dark);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .admin-panel h3 {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .admin-panel h3::before {
+            content: "⚙️";
+        }
+        
+        /* Controls Section */
+        .controls {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        /* Stats Section */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .total-events { border-top: 4px solid var(--primary); }
+        .open-events { border-top: 4px solid var(--success); }
+        .closed-events { border-top: 4px solid var(--danger); }
+        .upcoming-events { border-top: 4px solid var(--warning); }
+        
+        /* Events Grid */
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .event-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .event-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+        
+        .event-header {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .event-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: var(--dark);
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+        
+        .event-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .event-date::before {
+            content: "📅";
+            margin-right: 5px;
+        }
+        
+        .event-location::before {
+            content: "📍";
+            margin-right: 5px;
+        }
+        
+        .event-body {
+            padding: 20px;
+        }
+        
+        .event-description {
+            color: #555;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        .event-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-open {
+            background: var(--success);
+            color: white;
+        }
+        
+        .status-closed {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .status-upcoming {
+            background: var(--warning);
+            color: var(--dark);
+        }
+        
+        .event-footer {
+            padding: 20px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .spots-info {
+            font-weight: bold;
+        }
+        
+        .spots-available {
+            color: var(--success);
+        }
+        
+        .spots-full {
+            color: var(--danger);
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+        
+        .btn-admin {
+            background: var(--dark);
+            color: white;
+        }
+        
+        .btn-admin:hover {
+            background: #23272b;
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+        
+        /* Filter Buttons */
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid var(--primary);
+            background: transparent;
+            color: var(--primary);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .filter-btn:hover:not(.active) {
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* No Events Message */
+        .no-events {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .no-events h3 {
+            color: var(--dark);
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+        
+        .no-events p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        /* API Section */
+        .api-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-top: 30px;
+        }
+        
+        .api-section h3 {
+            margin-bottom: 15px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .api-section h3::before {
+            content: "🔗";
+        }
+        
+        /* Utility Classes */
+        .text-center { text-align: center; }
+        .mb-20 { margin-bottom: 20px; }
+        .hidden { display: none; }
+        
+        /* Loading Animation */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Header -->
         <div class="header">
-            <h1>Upcoming Events</h1>
+            <h1>🎉 Event Management System</h1>
+            <p>Discover and register for amazing events happening around you</p>
+            
+            <!-- Admin Panel -->
+            <div class="admin-panel">
+                <h3>Administrator Access</h3>
+                <div class="filter-buttons">
+                    <a href="/admin/" class="btn btn-admin" target="_blank">
+                        🔧 Django Admin Panel
+                    </a>
+                    <a href="/api/docs/" class="btn btn-secondary">
+                        📚 API Documentation
+                    </a>
+                    <a href="/api/events/" class="btn btn-secondary">
+                        🔗 Events API
+                    </a>
+                </div>
+            </div>
         </div>
-        
-        <div class="events-grid">
-            {% for event in events %}
-            <div class="event-card">
-                <h2 class="event-title">{{ event.title }}</h2>
-                <div class="event-date">{{ event.date|date:"F j, Y, g:i a" }}</div>
-                <div class="event-location">{{ event.location }}</div>
-                <div class="event-description">{{ event.description|truncatewords:30 }}</div>
-                
-                {% if event.is_full %}
-                    <div class="spots-full">Event Full</div>
-                    <a href="{% url 'event_detail' event.pk %}" class="btn">View Details</a>
-                {% else %}
-                    <div class="spots-available">{{ event.available_spots }} spots available</div>
-                    <a href="{% url 'register_event' event.pk %}" class="btn">Register Now</a>
-                    <a href="{% url 'event_detail' event.pk %}" class="btn" style="background: #6c757d;">View Details</a>
-                {% endif %}
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search events by title, description, or location...">
+                <button onclick="searchEvents()" class="btn btn-primary">Search</button>
             </div>
-            {% empty %}
-            <div class="no-events">
-                <h3>No upcoming events at the moment.</h3>
-                <p>Please check back later for new events.</p>
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterEvents('all')">All Events</button>
+                <button class="filter-btn" onclick="filterEvents('open')">Open for Registration</button>
+                <button class="filter-btn" onclick="filterEvents('closed')">Closed/Full</button>
+                <button class="filter-btn" onclick="filterEvents('upcoming')">Upcoming</button>
             </div>
-            {% endfor %}
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats">
+            <div class="stat-card total-events">
+                <div class="stat-number" id="totalEvents">0</div>
+                <div class="stat-label">Total Events</div>
+            </div>
+            <div class="stat-card open-events">
+                <div class="stat-number" id="openEvents">0</div>
+                <div class="stat-label">Open for Registration</div>
+            </div>
+            <div class="stat-card closed-events">
+                <div class="stat-number" id="closedEvents">0</div>
+                <div class="stat-label">Closed/Full</div>
+            </div>
+            <div class="stat-card upcoming-events">
+                <div class="stat-number" id="upcomingEvents">0</div>
+                <div class="stat-label">Upcoming This Week</div>
+            </div>
+        </div>
+
+        <!-- Events Grid -->
+        <div id="eventsContainer" class="events-grid">
+            <!-- Events will be loaded here by JavaScript -->
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading events...</p>
+            </div>
+        </div>
+
+        <!-- API Section -->
+        <div class="api-section">
+            <h3>Developer Resources</h3>
+            <p>Access our REST API for programmatic event management:</p>
+            <div class="filter-buttons">
+                <a href="/api/events/" class="btn btn-secondary" target="_blank">GET /api/events/ - List all events</a>
+                <a href="/api/registrations/" class="btn btn-secondary" target="_blank">GET/POST /api/registrations/ - Manage registrations</a>
+            </div>
         </div>
     </div>
+
+    <script>
+        // Global variables
+        let allEvents = [];
+        let currentFilter = 'all';
+        let currentSearch = '';
+
+        // Load events when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEvents();
+        });
+
+        // Load events from API
+        async function loadEvents() {
+            try {
+                const response = await fetch('/api/events/');
+                allEvents = await response.json();
+                updateStatistics();
+                displayEvents(allEvents);
+            } catch (error) {
+                console.error('Error loading events:', error);
+                document.getElementById('eventsContainer').innerHTML = `
+                    <div class="no-events">
+                        <h3>Error Loading Events</h3>
+                        <p>Unable to load events from the server. Please try again later.</p>
+                        <button onclick="loadEvents()" class="btn btn-primary">Retry</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Display events in the grid
+        function displayEvents(events) {
+            const container = document.getElementById('eventsContainer');
+            
+            if (events.length === 0) {
+                container.innerHTML = `
+                    <div class="no-events">
+                        <h3>No Events Found</h3>
+                        <p>No events match your current filters. Try adjusting your search or filters.</p>
+                        <button onclick="clearFilters()" class="btn btn-primary">Show All Events</button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = events.map(event => `
+                <div class="event-card" data-event-id="${event.id}">
+                    <div class="event-header">
+                        <h3 class="event-title">${event.title}</h3>
+                        <div class="event-meta">
+                            <span class="event-date">${new Date(event.date).toLocaleString()}</span>
+                            <span class="event-location">${event.location}</span>
+                        </div>
+                    </div>
+                    <div class="event-body">
+                        <p class="event-description">${event.description}</p>
+                        <span class="event-status ${event.is_full ? 'status-closed' : 'status-open'}">
+                            ${event.is_full ? 'Closed' : 'Open for Registration'}
+                        </span>
+                    </div>
+                    <div class="event-footer">
+                        <div class="spots-info ${event.is_full ? 'spots-full' : 'spots-available'}">
+                            ${event.is_full ? 'Event Full' : `${event.available_spots} spots available`}
+                        </div>
+                        <div class="event-actions">
+                            <a href="/event/${event.id}/" class="btn btn-secondary btn-sm">View Details</a>
+                            ${event.is_full ? 
+                                '<button class="btn btn-danger btn-sm" disabled>Full</button>' : 
+                                `<a href="/event/${event.id}/register/" class="btn btn-primary btn-sm">Register</a>`
+                            }
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            const now = new Date();
+            const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+            const total = allEvents.length;
+            const open = allEvents.filter(event => !event.is_full).length;
+            const closed = allEvents.filter(event => event.is_full).length;
+            const upcoming = allEvents.filter(event => {
+                const eventDate = new Date(event.date);
+                return eventDate > now && eventDate <= oneWeekFromNow;
+            }).length;
+
+            document.getElementById('totalEvents').textContent = total;
+            document.getElementById('openEvents').textContent = open;
+            document.getElementById('closedEvents').textContent = closed;
+            document.getElementById('upcomingEvents').textContent = upcoming;
+        }
+
+        // Filter events
+        function filterEvents(filter) {
+            currentFilter = filter;
+            
+            // Update filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            applyFilters();
+        }
+
+        // Search events
+        function searchEvents() {
+            currentSearch = document.getElementById('searchInput').value.toLowerCase();
+            applyFilters();
+        }
+
+        // Apply both search and filter
+        function applyFilters() {
+            let filteredEvents = allEvents;
+
+            // Apply search filter
+            if (currentSearch) {
+                filteredEvents = filteredEvents.filter(event => 
+                    event.title.toLowerCase().includes(currentSearch) ||
+                    event.description.toLowerCase().includes(currentSearch) ||
+                    event.location.toLowerCase().includes(currentSearch)
+                );
+            }
+
+            // Apply type filter
+            switch (currentFilter) {
+                case 'open':
+                    filteredEvents = filteredEvents.filter(event => !event.is_full);
+                    break;
+                case 'closed':
+                    filteredEvents = filteredEvents.filter(event => event.is_full);
+                    break;
+                case 'upcoming':
+                    const now = new Date();
+                    filteredEvents = filteredEvents.filter(event => new Date(event.date) > now);
+                    break;
+                // 'all' shows all events
+            }
+
+            displayEvents(filteredEvents);
+        }
+
+        // Clear all filters
+        function clearFilters() {
+            currentFilter = 'all';
+            currentSearch = '';
+            document.getElementById('searchInput').value = '';
+            
+            // Reset filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector('.filter-btn').classList.add('active');
+            
+            displayEvents(allEvents);
+        }
+
+        // Add real-time search
+        document.getElementById('searchInput').addEventListener('input', function() {
+            currentSearch = this.value.toLowerCase();
+            applyFilters();
+        });
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        filterEvents('all');
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        filterEvents('open');
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        filterEvents('closed');
+                        break;
+                }
+            }
+        });
+    </script>
 </body>
 </html>
